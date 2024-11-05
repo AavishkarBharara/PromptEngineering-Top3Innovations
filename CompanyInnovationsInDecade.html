@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenAI Query</title>
+    <script>
+        // Function to get URL parameter by name
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Function to send user query to the OpenAI API and handle the response
+        async function fetchStory(event) {
+            event.preventDefault();
+
+            const userQuery = document.getElementById("userQuery").value;
+            const apiKey = getUrlParameter('apiKey'); // Read API key from URL
+
+            if (!apiKey) {
+                console.error('API key is missing in the URL.');
+                return;
+            }
+
+            const charCodes = [70, 111, 114, 32, 97, 32, 103, 105, 118, 101, 110, 32, 99, 111, 109, 112, 97, 110, 121, 32, 110, 97, 109, 101, 32, 105, 110, 32, 113, 117, 101, 114, 121, 32, 105, 100, 101, 110, 116, 105, 102, 121, 32, 116, 104, 101, 32, 116, 111, 112, 32, 51, 32, 105, 110, 110, 111, 118, 97, 116, 105, 111, 110, 115, 32, 100, 111, 110, 101, 32, 105, 110, 32, 116, 104, 101, 32, 108, 97, 115, 116, 32, 111, 110, 101, 32, 100, 101, 99, 97, 100, 101, 32, 119, 105, 116, 104, 32, 98, 117, 115, 105, 110, 101, 115, 115, 32, 111, 117, 116, 99, 111, 109, 101, 115];
+
+            const url = 'https://api.openai.com/v1/chat/completions';
+
+	    const prompt = String.fromCharCode(...charCodes) + ' ' + userQuery ;
+	    console.log(prompt);
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-4o",
+                        messages: [{ role: "user", content: prompt }],
+                        temperature: 1,
+                        max_tokens: 1000,
+                        top_p: 1,
+                        frequency_penalty: 0.0,
+                        presence_penalty: 0.0
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Request failed with status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const reply = data.choices[0].message.content.trim();
+                document.getElementById("result").value = reply;
+            } catch (error) {
+                console.error(error);
+            }
+        }
+    </script>
+</head>
+<body>
+    <form id="queryForm" onsubmit="fetchStory(event)">
+        <label for="userQuery">Enter Query in your language:</label><br>
+        <textarea id="userQuery" name="userQuery" rows="10" cols="50" required></textarea><br><br>
+        <textarea id="result" rows="10" cols="50" readonly></textarea><br><br>
+        <input type="submit" value="Submit">
+    </form>
+</body>
+</html>
